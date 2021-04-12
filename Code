@@ -1,0 +1,60 @@
+#Run these lines to import the packages
+import matplotlib.pyplot as plt
+%matplotlib inline
+import numpy as np
+import matplotlib.ticker as ticker
+from scipy.optimize import curve_fit
+%config InlineBackend.figure_format = 'retina'
+import pandas as pd
+
+
+#These lines import the data file
+data = pd.read_excel('file name',
+                    names=('V','t'),
+                    sheet_name=('sheet name'), 
+                    usecols=(2,3), #selects the columns to use
+                    )
+data = data[500:1300]  #this selects which rows you want to remove the intial electric field measurement
+print(data) #to check the correct data is loaded in
+plt.plot(data.t, data.V) #to check the data looks correct when plotted
+
+
+
+#This section makes the plot of the pulse, fits the parameters and outputs their values
+fig=plt.figure(figsize=(10,6))
+ax=fig.add_subplot(111)
+ax.errorbar(data.t,                   
+           data.V,                        
+           marker='o',
+           markersize=2,
+           color='black',
+           ecolor='black',
+           markerfacecolor='black',
+           linestyle='none',
+           capsize=6,
+           )
+plt.xlabel('t (s)')
+plt.ylabel('V (V)')
+plt.tick_params(direction='inout',
+               length=7,
+               bottom='on',
+               left='on',
+               top='on',
+               right='on',
+               
+               )
+plt.rcParams.update({'font.size':15})
+def gauss(x, H, A, x0, sigma):
+    return H + A * np.exp(-(x-x0)**2/(2*sigma**2))
+def gauss_fit(x,y):
+    mean = sum(x*y)/sum(y)
+    sigma = np.sqrt(sum(y*(x-mean)**2)/sum(y))
+    popt, pcov = curve_fit(gauss, x, y, p0=[min(y), max(y), mean, sigma])
+    return popt
+H, A, x0, sigma = gauss_fit(data.t,data.V)
+FWHM = 2.35482*sigma  #FWHM= full width at half maximum
+
+plt.show()
+print ('maximum V is', H + A)
+print('time of peak is', x0)
+print('pulse duration measured at half amplitude is', FWHM)
